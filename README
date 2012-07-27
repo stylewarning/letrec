@@ -27,7 +27,16 @@ The following code
 
 produces
 
-  15
+  15.
+
+Another example:
+
+  (letrec:letrec ((double (multiplier 2)))
+    (double (funcall #'double 5)))
+
+produces
+
+  20.
 
 
 ISSUES
