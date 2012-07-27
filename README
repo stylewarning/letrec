@@ -1,0 +1,50 @@
+                                LETREC
+                                ======
+
+                             Robert Smith
+
+
+INTRODUCTION
+------------
+
+LETREC:LETREC is a macro which aims to imitate Scheme's letrec
+form. It is a useful construct for functional programming in Common
+Lisp, where you have function-producing forms which need to be
+functionally bound to a symbol.
+
+
+EXAMPLE
+-------
+
+The following code
+
+  (defun multiplier (n)
+    (lambda (x) (* n x)))
+
+  (letrec ((double (multiplier 2))
+           (triple (multiplier 3)))
+    (double (triple 5)))
+
+produces
+
+  15
+
+
+ISSUES
+------
+
+Unforunately, the macro isn't a very efficient implementation. There
+is a level of indirection with the function calling. Essentially, a
+LETREC with the binding
+
+  (name fn)
+
+is expanded to a LABELS binding of the form
+
+  (name (&rest args)
+    (apply fn args))
+
+which is somewhat abysmal.
+
+Patches are welcome for implementation-specific ways of implementing
+the macro.
