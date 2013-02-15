@@ -6,6 +6,7 @@
   :description "A simple alternative to Scheme's LETREC."
   :author "Robert Smith <quad@symbo1ics.com>"
   :license "Public Domain. See LICENSE."
+  :depends-on (:alexandria)
   :components ((:file "package")
                (:file "letrec")))
 
