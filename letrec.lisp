@@ -3,43 +3,40 @@
 
 (in-package #:letrec)
 
-(defmacro letrec (bindings &body body)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun check-definitions (definitions)
+    (dolist (definition definitions)
+      (unless (and (listp definition)
+                   (not (null definition))
+                   (not (null (cdr definition)))
+                   (symbolp (car definition)))
+        (error "Invalid binding in LETREC definitions: ~S" definition)))))
+
+(defmacro letrec ((&rest definitions) &body body)
   "A macro imitation of Scheme's LETREC. Bindings should be of the form
 
    (NAME FUNCTION-FORM)
 
 where NAME is a symbol and FUNCTION-FORM is any function-producing form."
-  (let ((args (gensym "ARGS-")))
-    `(labels ,(loop :for (name fn) :in bindings
-                    :do (assert (symbolp name)
-                                (name)
-                                "Bindings must have symbols for names. Given ~S in the binding ~S."
-                                name
-                                (list name fn))
-                    :collect `(,name (&rest ,args) (apply ,fn ,args)))
-       ,@body)))
-
-(defmacro letrec* (bindings &body body)
-  "A macro imitation of Scheme's LETREC. Bindings should be of the form
-
-   (NAME FUNCTION-FORM)
-
-where NAME is a symbol and FUNCTION-FORM is any function-producing form."
-  (let ((args (gensym "ARGS-"))
-        (names (mapcar #'car bindings)))
-    (multiple-value-bind (body declarations)
+  (check-definitions definitions)
+  (let ((gensyms (loop :for d in definitions :collect (gensym)))
+        (names (mapcar #'car definitions))
+        (fdefs (mapcar #'cadr definitions))
+        (args (gensym "ARGS-")))
+    (multiple-value-bind (body decls)
         (alexandria:parse-body body)
-      `(labels ,(loop :for (name fn) :in bindings
+      `(let ,gensyms
+         (flet ,(loop :for g :in gensyms
+                      :for name :in names
+                      :for fdef :in fdefs
                       :do (assert (symbolp name)
                                   (name)
                                   "Bindings must have symbols for names. Given ~S in the binding ~S."
                                   name
-                                  (list name fn))
-                      :collect `(,name (&rest ,args)
-                                (declare (dynamic-extent ,args))
-                                (apply ,fn ,args)))
-         (declare ,@declarations
-                  ,@(loop :for name :in names
-                          :collect `(dynamic-extent #',name)
-                          :collect `(inline ,name)))
-         ,@body))))
+                                  (list name fdef))
+                      :collect `(,name (&rest ,args) (apply ,g ,args)))
+           ,(when decls
+              `(declare ,@decls))
+           (setf ,@(mapcan #'list gensyms fdefs))
+           ,@body)))))
+

@@ -3,5 +3,5 @@
 
 (defpackage #:letrec
   (:use #:cl)
-  (:export #:letrec #:letrec*))
+  (:export #:letrec))
 
