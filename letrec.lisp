@@ -28,12 +28,6 @@ where NAME is a symbol and FUNCTION-FORM is any function-producing form."
       `(let ,gensyms
          (flet ,(loop :for g :in gensyms
                       :for name :in names
-                      :for fdef :in fdefs
-                      :do (assert (symbolp name)
-                                  (name)
-                                  "Bindings must have symbols for names. Given ~S in the binding ~S."
-                                  name
-                                  (list name fdef))
                       :collect `(,name (&rest ,args) (apply ,g ,args)))
            ,(when decls
               `(declare ,@decls))
